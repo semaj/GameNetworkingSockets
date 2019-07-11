@@ -74,7 +74,7 @@ static const RAND_METHOD RAND_Win32CryptoGenRandom =
 
 #ifdef ANDROID
 // This isn't in the headers, but is implemented for Android 2.4 and newer
-extern "C" int pthread_atfork(void (*prepare)(void), void (*parent)(void), void(*child)(void));
+//extern "C" int pthread_atfork(void (*prepare)(void), void (*parent)(void), void(*child)(void));
 #endif
 
 //-----------------------------------------------------------------------------
@@ -119,9 +119,9 @@ void COpenSSLWrapper::Initialize()
 #endif
 
 #ifdef OSX
-		pthread_atfork( NULL, NULL, []{ arc4random_stir(); RAND_poll(); } );
+		//pthread_atfork( NULL, NULL, []{ arc4random_stir(); RAND_poll(); } );
 #elif defined(POSIX)
-		pthread_atfork( NULL, NULL, []{ RAND_poll(); } );
+		//pthread_atfork( NULL, NULL, []{ RAND_poll(); } );
 #endif
 
 		iStatus = RAND_status();

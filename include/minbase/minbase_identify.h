@@ -68,6 +68,8 @@
 #define	VALVE_BIG_ENDIAN 1
 #endif
 
+#define VALVE_LITTLE_ENDIAN 1
+
 #if defined( VALVE_LITTLE_ENDIAN ) == defined( VALVE_BIG_ENDIAN )
 	#error "Cannot determine endianness of platform!"
 #endif
