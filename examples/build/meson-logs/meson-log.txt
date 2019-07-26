@@ -1,0 +1,10 @@
+Build started at 2019-07-11T17:09:33.435843
+Main binary: /usr/bin/python3
+Python system: Linux
+The Meson build system
+Version: 0.51.0
+Source dir: /home/james/GameNetworkingSockets/examples
+Build dir: /home/james/GameNetworkingSockets/examples/build
+Build type: native build
+
+ERROR: First statement must be a call to project
