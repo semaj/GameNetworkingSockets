@@ -21,6 +21,9 @@
 #include <tier1/utlpriorityqueue.h>
 #include <tier1/utllinkedlist.h>
 #include "crypto.h"
+#include <stdio.h> 
+#include <unistd.h> 
+#include <fcntl.h> 
 
 // Ugggggggggg MSVC VS2013 STL bug: try_lock_for doesn't actually respect the timeout, it always ends up using an infinite timeout.
 // And even in 2015, the code is calling the timer and to convert a relative time to an absolute time, and waiting until that time,
@@ -436,7 +439,9 @@ static void WakeSteamDatagramThread()
 		if ( s_hSockWakeThreadWrite != INVALID_SOCKET )
 		{
 			char buf[1] = {0};
-			send( s_hSockWakeThreadWrite, buf, 1, 0 );
+			if (write(s_hSockWakeThreadWrite, buf, 1) <= 0) {
+              printf("write() call failed.  Error code 0x%08x.", errno);
+            }
 		}
 	#endif
 }
@@ -910,7 +915,9 @@ static bool PollRawUDPSockets( int nMaxTimeoutMS )
 			// or combine them.  That would result in complicated race conditions
 			// where we stay asleep a lot longer than we should.
 			Assert( pPollFDs[idx].fd == s_hSockWakeThreadRead );
-			::recv( s_hSockWakeThreadRead, buf, sizeof(buf), 0 );
+			if (read( s_hSockWakeThreadRead, buf, sizeof(buf)) == -1) {
+              printf("read() call failed.  Error code 0x%08x.", errno);
+            }
 			continue;
 		}
 		CRawUDPSocketImpl *pSock = pSocketsToPoll[ idx ];
@@ -1429,33 +1436,39 @@ static bool BEnsureSteamDatagramThreadRunning( SteamDatagramErrMsg &errMsg )
 			sockType |= SOCK_CLOEXEC;
 		#endif
 		int sock[2];
-		if ( socketpair( AF_LOCAL, sockType, 0, sock ) != 0 )
+        printf("before pipe\n");
+		if ( pipe(sock) != 0 )
 		{
-			V_sprintf_safe( errMsg, "socketpair() call failed.  Error code 0x%08x.", GetLastSocketError() );
+			V_sprintf_safe( errMsg, "pipe() call failed.  Error code 0x%08x.", errno);
 			return false;
 		}
+        printf("after pipe\n");
 
 		s_hSockWakeThreadRead = sock[0];
 		s_hSockWakeThreadWrite = sock[1];
 
-		unsigned int opt;
-		opt = 1;
-		if ( ioctlsocket( s_hSockWakeThreadRead, FIONBIO, (unsigned long*)&opt ) != 0 )
+		if ( fcntl(s_hSockWakeThreadRead, F_SETFL, O_NONBLOCK) != 0 )
 		{
-			AssertMsg1( false, "Failed to set socket nonblocking mode.  Error code 0x%08x.", GetLastSocketError() );
+        V_sprintf_safe( errMsg, "fcntl() 1 call failed.  Error code 0x%08x.", errno);
+        return false;
 		}
-		opt = 1;
-		if ( ioctlsocket( s_hSockWakeThreadWrite, FIONBIO, (unsigned long*)&opt ) != 0 )
+        printf("after fcntl1\n");
+
+        if ( fcntl(s_hSockWakeThreadWrite, F_SETFL, O_NONBLOCK) != 0 )
 		{
-			AssertMsg1( false, "Failed to set socket nonblocking mode.  Error code 0x%08x.", GetLastSocketError() );
+        V_sprintf_safe( errMsg, "fcntl() call failed.  Error code 0x%08x.", errno);
+        return false;
 		}
+        printf("after fcntl2\n");
 	#endif
 
 	// Create the thread and start socket processing
 	g_bWantThreadRunning = true;
 
+    printf("threadrunn\n");
 	s_pThreadSteamDatagram = new std::thread( SteamDatagramThreadProc );
 
+    printf("finish\n");
 	return true;
 }
 
@@ -1794,8 +1807,10 @@ bool BSteamNetworkingSocketsLowLevelAddRef( SteamDatagramErrMsg &errMsg )
 
 		// Give us a extra time here.  This is a one-time init function and the OS might
 		// need to load up libraries and stuff.
+        printf("crypto init\n");
 		SteamDatagramTransportLock::SetLongLockWarningThresholdMS( 500 );
 
+        printf("transportlock\n");
 		// Init sockets
 		#ifdef _WIN32
 			WSAData wsaData;
@@ -1813,20 +1828,25 @@ bool BSteamNetworkingSocketsLowLevelAddRef( SteamDatagramErrMsg &errMsg )
 
 		// Make sure random number generator is seeded
 		SeedWeakRandomGenerator();
+        printf("seed\n");
 	}
+    printf("if\n");
 
 	//extern void KludgePrintPublicKey();
 	//KludgePrintPublicKey();
 
 	++s_nLowLevelSupportRefCount;
+    printf("count\n");
 
 	// Fire up the thread
 	if ( !BEnsureSteamDatagramThreadRunning( errMsg ) )
 	{
+        printf("beensure\n");
 		SteamNetworkingSocketsLowLevelDecRef();
 		return false;
 	}
 
+    printf("end\n");
 	return true;
 }
 
