@@ -342,7 +342,9 @@ private:
 
 			// Assume it's just a ordinary chat message, dispatch to everybody else
 			sprintf( temp, "%s: %s", itClient->second.m_sNick.c_str(), cmd );
-			SendStringToAllClients( temp, itClient->first );
+            Printf("Received %s\n", cmd);
+            SendStringToClient( itClient->first, cmd );
+			//SendStringToAllClients( temp, itClient->first );
 		}
 	}
 
@@ -540,7 +542,7 @@ public:
 		{
 			PollIncomingMessages();
 			PollConnectionStateChanges();
-			PollLocalUserInput();
+            PollLocalUserInput();
 			std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
 		}
 	}
@@ -576,27 +578,27 @@ private:
 
 	void PollLocalUserInput()
 	{
-		std::string cmd;
-		while ( !g_bQuit && LocalUserInput_GetNext( cmd ))
-		{
+        std::string cmd = "hello!";
+		//while ( !g_bQuit && LocalUserInput_GetNext( cmd ))
+		//{
 
-			// Check for known commands
-			if ( strcmp( cmd.c_str(), "/quit" ) == 0 )
-			{
-				g_bQuit = true;
-				Printf( "Disconnecting from chat server" );
+			//// Check for known commands
+			//if ( strcmp( cmd.c_str(), "/quit" ) == 0 )
+			//{
+				//g_bQuit = true;
+				//Printf( "Disconnecting from chat server" );
 
-				// Close the connection gracefully.
-				// We use linger mode to ask for any remaining reliable data
-				// to be flushed out.  But remember this is an application
-				// protocol on UDP.  See ShutdownSteamDatagramConnectionSockets
-				m_pInterface->CloseConnection( m_hConnection, 0, "Goodbye", true );
-				break;
-			}
+				//// Close the connection gracefully.
+				//// We use linger mode to ask for any remaining reliable data
+				//// to be flushed out.  But remember this is an application
+				//// protocol on UDP.  See ShutdownSteamDatagramConnectionSockets
+				//m_pInterface->CloseConnection( m_hConnection, 0, "Goodbye", true );
+				//break;
+			//}
 
 			// Anything else, just send it to the server and let them parse it
-			m_pInterface->SendMessageToConnection( m_hConnection, cmd.c_str(), (uint32)cmd.length(), k_nSteamNetworkingSend_Reliable );
-		}
+			m_pInterface->SendMessageToConnection( m_hConnection, cmd.c_str(), (uint32) cmd.length(), k_nSteamNetworkingSend_Reliable );
+		//}
 	}
 
 	virtual void OnSteamNetConnectionStatusChanged( SteamNetConnectionStatusChangedCallback_t *pInfo ) override
@@ -725,7 +727,6 @@ int main( int argc, const char *argv[] )
 
 	// Create client and server sockets
 	InitSteamDatagramConnectionSockets();
-	LocalUserInput_Init();
 
 	if ( bClient )
 	{

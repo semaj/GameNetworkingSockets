@@ -114,7 +114,7 @@ void SteamDatagramTransportLock::Unlock()
 	#endif
 
 	// Yelp if we held the lock for longer than the threshold.
-	AssertMsg1( usecElapsedTooLong == 0, "SteamDatagramTransportLock held for %.1fms!", usecElapsedTooLong*1e-3 );
+	//AssertMsg1( usecElapsedTooLong == 0, "SteamDatagramTransportLock held for %.1fms!", usecElapsedTooLong*1e-3 );
 }
 
 void SteamDatagramTransportLock::SetLongLockWarningThresholdMS( int msWarningThreshold )
