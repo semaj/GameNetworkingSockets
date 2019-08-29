@@ -742,6 +742,8 @@ bool CSteamNetworkConnectionUDP::BInitConnect( const SteamNetworkingIPAddr &addr
 	if ( !m_pSocket )
 		return false;
 
+    printf("BInitConnect\n");
+
 	// We use identity validity to denote when our connection has been accepted,
 	// so it's important that it be cleared.  (It should already be so.)
 	Assert( m_identityRemote.IsInvalid() );
@@ -781,6 +783,7 @@ bool CSteamNetworkConnectionUDP::BInitConnect( const SteamNetworkingIPAddr &addr
 
 	// Start the connection state machine, and send the first request packet.
 	CheckConnectionStateAndSetNextThinkTime( usecNow );
+    printf("EndOfBinitConnect\n");
 
 	return true;
 }

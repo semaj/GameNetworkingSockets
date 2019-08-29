@@ -340,9 +340,11 @@ private:
 				continue;
 			}
 
+            Printf("Hello1\n");
 			// Assume it's just a ordinary chat message, dispatch to everybody else
 			sprintf( temp, "%s: %s", itClient->second.m_sNick.c_str(), cmd );
-            SendStringToClient( itClient->first, temp );
+            Printf("Hello\n");
+            SendStringToClient( itClient->first, cmd );
 			//SendStringToAllClients( temp, itClient->first );
 		}
 	}
@@ -536,14 +538,20 @@ public:
 		m_hConnection = m_pInterface->ConnectByIPAddress( serverAddr );
 		if ( m_hConnection == k_HSteamNetConnection_Invalid )
 			FatalError( "Failed to create connection" );
+        printf("Connected\n");
+        std::string cmd = "james";
+        EResult result = m_pInterface->SendMessageToConnection( m_hConnection, cmd.c_str(), (uint32) cmd.length(), k_nSteamNetworkingSend_Reliable );
 
-		while ( !g_bQuit )
-		{
-			PollIncomingMessages();
-			PollConnectionStateChanges();
-			PollLocalUserInput();
-			std::this_thread::sleep_for( std::chrono::milliseconds( 10 ) );
-		}
+        for (int i = 0; i < 1000; i++) {
+          //PollLocalUserInput();
+        //}
+        //while ( !g_bQuit )
+        //{
+            PollLocalUserInput();
+            PollIncomingMessages();
+            //PollConnectionStateChanges();
+            //std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
+        }
 	}
 private:
 
@@ -552,12 +560,12 @@ private:
 
 	void PollIncomingMessages()
 	{
-		while ( !g_bQuit )
-		{
+		//while ( !g_bQuit )
+		//{
 			ISteamNetworkingMessage *pIncomingMsg = nullptr;
 			int numMsgs = m_pInterface->ReceiveMessagesOnConnection( m_hConnection, &pIncomingMsg, 1 );
 			if ( numMsgs == 0 )
-				break;
+				return;
 			if ( numMsgs < 0 )
 				FatalError( "Error checking for messages" );
 
@@ -567,7 +575,7 @@ private:
 
 			// We don't need this anymore.
 			pIncomingMsg->Release();
-		}
+		//}
 	}
 
 	void PollConnectionStateChanges()
@@ -577,7 +585,7 @@ private:
 
 	void PollLocalUserInput()
 	{
-		//std::string cmd;
+        std::string cmd = "hello!";
 		//while ( !g_bQuit && LocalUserInput_GetNext( cmd ))
 		//{
 
@@ -596,7 +604,7 @@ private:
 			//}
 
 			// Anything else, just send it to the server and let them parse it
-			m_pInterface->SendMessageToConnection( m_hConnection, "hello!", (uint32) 6, k_nSteamNetworkingSend_Reliable );
+			m_pInterface->SendMessageToConnection( m_hConnection, cmd.c_str(), (uint32) cmd.length(), k_nSteamNetworkingSend_Reliable );
 		//}
 	}
 
@@ -726,7 +734,6 @@ int main( int argc, const char *argv[] )
 
 	// Create client and server sockets
 	InitSteamDatagramConnectionSockets();
-	LocalUserInput_Init();
 
 	if ( bClient )
 	{
@@ -739,10 +746,10 @@ int main( int argc, const char *argv[] )
 		server.Run( (uint16)nPort );
 	}
 
-	ShutdownSteamDatagramConnectionSockets();
+	//ShutdownSteamDatagramConnectionSockets();
 
 	// Ug, why is there no simple solution for portable, non-blocking console user input?
 	// Just nuke the process
 	//LocalUserInput_Kill();
-	NukeProcess(0);
+	//NukeProcess(0);
 }

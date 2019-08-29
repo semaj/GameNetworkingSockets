@@ -3086,8 +3086,8 @@ SteamNetworkingMicroseconds CSteamNetworkConnectionBase::SNP_TimeWhenWantToSendN
 	// We really shouldn't be trying to do this when not connected
 	if ( !BStateIsConnectedForWirePurposes() )
 	{
-		AssertMsg( false, "We shouldn't be trying to send packets when not fully connected" );
-		return k_nThinkTime_Never;
+		//AssertMsg( false, "We shouldn't be trying to send packets when not fully connected" );
+		//return k_nThinkTime_Never;
 	}
 
 	// When does the sender want to send data?

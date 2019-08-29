@@ -449,6 +449,7 @@ HSteamNetConnection CSteamNetworkingSockets::ConnectByIPAddress( const SteamNetw
 		return k_HSteamNetConnection_Invalid;
 	}
 
+    printf("Done ConnectByIp\n");
 	return pConn->m_hConnectionSelf;
 }
 

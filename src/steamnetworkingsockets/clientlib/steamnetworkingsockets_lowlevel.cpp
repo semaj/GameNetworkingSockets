@@ -117,7 +117,7 @@ void SteamDatagramTransportLock::Unlock()
 	#endif
 
 	// Yelp if we held the lock for longer than the threshold.
-	AssertMsg1( usecElapsedTooLong == 0, "SteamDatagramTransportLock held for %.1fms!", usecElapsedTooLong*1e-3 );
+	//AssertMsg1( usecElapsedTooLong == 0, "SteamDatagramTransportLock held for %.1fms!", usecElapsedTooLong*1e-3 );
 }
 
 void SteamDatagramTransportLock::SetLongLockWarningThresholdMS( int msWarningThreshold )
@@ -547,29 +547,29 @@ static SOCKET OpenUDPSocketBoundToSockAddr( const void *sockaddr, size_t len, St
 	}
 
 	// We always use nonblocking IO
-	opt = 1;
-	if ( ioctlsocket( sock, FIONBIO, (unsigned long*)&opt ) == -1 )
-	{
-		V_sprintf_safe( errMsg, "Failed to set socket nonblocking mode.  Error code 0x%08x.", GetLastSocketError() );
-		closesocket( sock );
-		return INVALID_SOCKET;
-	}
+	//opt = 1;
+	//if ( ioctlsocket( sock, FIONBIO, (unsigned long*)&opt ) == -1 )
+	//{
+		//V_sprintf_safe( errMsg, "Failed to set socket nonblocking mode.  Error code 0x%08x.", GetLastSocketError() );
+		//closesocket( sock );
+		//return INVALID_SOCKET;
+	//}
 
 	// Set buffer sizes
-	opt = g_nSteamDatagramSocketBufferSize;
-	if ( setsockopt( sock, SOL_SOCKET, SO_SNDBUF, (char *)&opt, sizeof(opt) ) )
-	{
-		V_sprintf_safe( errMsg, "Failed to set socket send buffer size.  Error code 0x%08x.", GetLastSocketError() );
-		closesocket( sock );
-		return INVALID_SOCKET;
-	}
-	opt = g_nSteamDatagramSocketBufferSize;
-	if ( setsockopt( sock, SOL_SOCKET, SO_RCVBUF, (char *)&opt, sizeof(opt) ) == -1 )
-	{
-		V_sprintf_safe( errMsg, "Failed to set socket recv buffer size.  Error code 0x%08x.", GetLastSocketError() );
-		closesocket( sock );
-		return INVALID_SOCKET;
-	}
+	//opt = g_nSteamDatagramSocketBufferSize;
+	//if ( setsockopt( sock, SOL_SOCKET, SO_SNDBUF, (char *)&opt, sizeof(opt) ) )
+	//{
+		//V_sprintf_safe( errMsg, "Failed to set socket send buffer size.  Error code 0x%08x.", GetLastSocketError() );
+		//closesocket( sock );
+		//return INVALID_SOCKET;
+	//}
+	//opt = g_nSteamDatagramSocketBufferSize;
+	//if ( setsockopt( sock, SOL_SOCKET, SO_RCVBUF, (char *)&opt, sizeof(opt) ) == -1 )
+	//{
+		//V_sprintf_safe( errMsg, "Failed to set socket recv buffer size.  Error code 0x%08x.", GetLastSocketError() );
+		//closesocket( sock );
+		//return INVALID_SOCKET;
+	//}
 
 	// Handle IP v6 dual stack?
 	if ( pnIPv6AddressFamilies )
@@ -607,9 +607,9 @@ static SOCKET OpenUDPSocketBoundToSockAddr( const void *sockaddr, size_t len, St
 	}
 
 	// Bind it to specific desired port and/or interfaces
-	if ( bind( sock, (struct sockaddr *)sockaddr, (socklen_t)len ) == -1 )
+	if (connect( sock, (struct sockaddr *)sockaddr, (socklen_t)len ) == -1 && GetLastSocketError() != 115)
 	{
-		V_sprintf_safe( errMsg, "Failed to bind socket.  Error code 0x%08X.", GetLastSocketError() );
+		V_sprintf_safe( errMsg, "Failed to connect socket.  Error code 0x%08X.", GetLastSocketError() );
 		closesocket( sock );
 		return INVALID_SOCKET;
 	}
@@ -726,6 +726,7 @@ static CRawUDPSocketImpl *OpenRawUDPSocketInternal( CRecvPacketCallback callback
 
 		// We re IPv4 only
 		nAddressFamilies = k_nAddressFamily_IPv4;
+        printf("Created socket\n");
 	}
 
 	// Read back address we actually bound to.
@@ -784,6 +785,7 @@ static CRawUDPSocketImpl *OpenRawUDPSocketInternal( CRecvPacketCallback callback
 		*pnAddressFamilies = nAddressFamilies;
 
 	// Give them something they can use
+    printf("Returning socket\n");
 	return pSock;
 }
 
@@ -1575,6 +1577,7 @@ IBoundUDPSocket *OpenUDPSocketBoundToHost( const netadr_t &adrRemote, CRecvPacke
 	// Create a socket, bind it to the desired local address
 	CDedicatedBoundSocket *pTempContext = nullptr; // don't yet know the context
 	CRawUDPSocketImpl *pRawSock = OpenRawUDPSocketInternal( CRecvPacketCallback( DedicatedBoundSocketCallback, pTempContext ), errMsg, nullptr, &nAddressFamilies );
+    printf("Bound\n");
 	if ( !pRawSock )
 		return nullptr;
 
@@ -1583,6 +1586,7 @@ IBoundUDPSocket *OpenUDPSocketBoundToHost( const netadr_t &adrRemote, CRecvPacke
 	pRawSock->m_callback.m_pContext = pBoundSock;
 	pBoundSock->m_callback = callback;
 
+    printf("EndOfOpenBound\n");
 	return pBoundSock;
 }
 
@@ -1649,11 +1653,13 @@ bool CSharedSocket::BInit( const SteamNetworkingIPAddr &localAddr, CRecvPacketCa
 	Kill();
 
 	SteamNetworkingIPAddr bindAddr = localAddr;
+    printf("BinitOpen\n");
 	m_pRawSock = OpenRawUDPSocket( CRecvPacketCallback( CallbackRecvPacket, this ), errMsg, &bindAddr, nullptr );
 	if ( m_pRawSock == nullptr )
 		return false;
 
 	m_callbackDefault = callbackDefault;
+    printf("Binit'd\n");
 	return true;
 }
 
@@ -1931,7 +1937,7 @@ SteamNetworkingMicroseconds SteamNetworkingSockets_GetLocalTimestamp()
 		// How much raw timer time (presumed to be wall clock time) has elapsed since
 		// we read the timer?
 		SteamNetworkingMicroseconds usecElapsed = usecResult - usecLastReturned;
-		Assert( usecElapsed >= 0 ); // Our raw timer function is not monotonic!  We assume this never happens!
+		//Assert( usecElapsed >= 0 ); // Our raw timer function is not monotonic!  We assume this never happens!
 		const SteamNetworkingMicroseconds k_usecMaxTimestampDelta = k_nMillion; // one second
 		if ( usecElapsed <= k_usecMaxTimestampDelta )
 		{
