@@ -1172,6 +1172,7 @@ EResult CSteamNetworkConnectionBase::_APISendMessageToConnection( const void *pD
 
 	// Pass to reliability layer
 	SteamNetworkingMicroseconds usecNow = SteamNetworkingSockets_GetLocalTimestamp();
+    printf("About to SNP_SEND\n");
 	return SNP_SendMessage( usecNow, pData, cbData, nSendFlags );
 }
 

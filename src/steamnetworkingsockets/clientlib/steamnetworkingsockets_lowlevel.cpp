@@ -242,6 +242,7 @@ public:
 			msg.msg_controllen = 0;
 			msg.msg_flags = 0;
 
+            printf("Is this a send?\n");
 			int r = ::sendmsg( m_socket, &msg, 0 );
 			return ( r >= 0 ); // just check for -1 for error, since we don't want to take the time here to scan the iovec and sum up the expected total number of bytes sent
 		#endif

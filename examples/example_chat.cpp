@@ -539,19 +539,19 @@ public:
 		if ( m_hConnection == k_HSteamNetConnection_Invalid )
 			FatalError( "Failed to create connection" );
         printf("Connected\n");
-        std::string cmd = "james";
+        std::string cmd = "/nick james";
         EResult result = m_pInterface->SendMessageToConnection( m_hConnection, cmd.c_str(), (uint32) cmd.length(), k_nSteamNetworkingSend_Reliable );
 
-        for (int i = 0; i < 1000; i++) {
-          //PollLocalUserInput();
+        //for (int i = 0; i < 1000; i++) {
+          ////PollLocalUserInput();
+        ////}
+        ////while ( !g_bQuit )
+        ////{
+            //PollLocalUserInput();
+            //PollIncomingMessages();
+            ////PollConnectionStateChanges();
+            ////std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
         //}
-        //while ( !g_bQuit )
-        //{
-            PollLocalUserInput();
-            PollIncomingMessages();
-            //PollConnectionStateChanges();
-            //std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
-        }
 	}
 private:
 
@@ -570,6 +570,7 @@ private:
 				FatalError( "Error checking for messages" );
 
 			// Just echo anything we get from the server
+            printf("Received data of size %d\n", pIncomingMsg->m_cbSize);
 			fwrite( pIncomingMsg->m_pData, 1, pIncomingMsg->m_cbSize, stdout );
 			fputc( '\n', stdout );
 
